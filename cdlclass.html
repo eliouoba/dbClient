@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CdlClass</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="request.js" type="module"></script>
+</head>
+
+<body>
+    <h1 id=home><a href="index.html">ABC Dispatcher Database</a></h1>
+    <script>
+        var style = document.createElement('style');
+        let rule = 
+            "#updateCdlClass { " +
+            "display: flex; " +
+            "flex-direction: row; " +
+            "border: 1px solid; " +
+            "border-radius: 10px; " +
+            "padding: 10px; " +
+            "column-gap: 10px; }\n"
+
+        rule += 
+            '#deleteCdlClass { ' +
+            "border: 1px solid; " +
+            "border-radius: 10px; " +
+            "padding: 10px; }\n"
+        
+        rule += 
+            '#addCdlClass { ' +
+            'display: flex; ' +
+            'flex-direction: row; ' +
+            "border: 1px solid; " +
+            "border-radius: 10px; " +
+            "padding: 10px; " +
+            'justify-content: center; ' +
+            'column-gap: 10px; }\n'
+        
+        rule += 
+            '#addFields { ' +    
+            "column-count: 2; }\n"
+
+        rule += 
+            '#updateFields { ' +  
+            "column-count: 2; }\n"
+
+        style.innerHTML = rule;
+        document.body.appendChild(style);
+    </script>
+    
+    <div id="mainDiv">
+        <p id="rowHeader">Rows:</p>
+        <p id="interactHeader">Interact:</p>
+
+        <div id="addCdlClass">
+            <div id="addFields">
+                <script type="module">
+                    //dynamically create a text box for each field
+                    import { makeSqlQuery } from './request.js'; 
+                    let addDiv = document.getElementById('addFields'); 
+                    let queryString =
+                        `select * from cdlclass limit 1;`;
+                    makeSqlQuery(queryString, (data) => {
+                        if (Object.keys(data[0]).includes("error")) {
+                            errorDiv.innerText = data.error
+                        } else {
+                            errorDiv.innerText = '';
+                            Object.keys(data[0]).forEach(column => {  
+                                let textBox = document.createElement('input')
+                                textBox.type = 'text';
+                                textBox.placeholder = column
+                                textBox.id = "add" + column+ "Input"
+                                document.getElementById('addFields').appendChild(textBox)
+                            })
+                        }
+                    });
+                </script>
+            </div>
+
+            <button id=addButton>
+                add cdlclass
+                <script type="module">
+                    import { makeSqlQuery } from './request.js'
+
+                    //set add button onclick
+                    document.getElementById("addButton").onclick = () => {
+
+                        //build query string
+                        let queryString="insert into cdlclass values ("
+                        let addDiv = document.getElementById('addFields'); 
+                        for (let child of addDiv.children) {
+                            if (child.nodeName == 'INPUT') {
+                                queryString += `'${child.value}'`
+                                if (child.nextSibling) queryString += ", "
+                            }
+                        }
+                        queryString += ");"
+
+                        //send query to DB
+                        makeSqlQuery(queryString, (data) => {
+                            if (Object.keys(data).includes("error")) {
+                                errorDiv.innerText = data.error
+                            } else {
+                                errorDiv.innerText = ''
+                                if(!alert("successfully added")) window.location.reload();
+                            }
+                        });
+                    }
+                </script>
+            </button>
+
+        </div>
+        <div id="deleteCdlClass">
+            <select id="deleteCdlClassDropDown">
+                <option hidden selected>Select a cdlclass</option>
+                <script type="module">
+                    
+                    //populate delete cdlclass dropdown
+                    import { makeSqlQuery } from './request.js'
+                    makeSqlQuery('select classId from cdlclass', (data) => {
+                        data.forEach(cdlclass => {  
+                            let option = document.createElement('option')
+                            option.innerText = cdlclass.classId
+                            document.getElementById('deleteCdlClassDropDown').appendChild(option)
+                        })
+                    });
+                </script>
+            </select>
+            <button id=deleteButton>
+                Delete cdlclass
+                <script type="module">
+                    import { makeSqlQuery } from './request.js'
+                    
+                    //create delete button onclick function
+                    document.getElementById("deleteButton").onclick = () => {
+                        let cdlclass =
+                            document.getElementById('deleteCdlClassDropDown').value  
+                        if (cdlclass === 'Select a cdlclass') return;
+                        
+                        //send query to DB
+                        makeSqlQuery(`delete from cdlclass where classid = '${cdlclass}'`,
+                        (data) => {
+                            if (Object.keys(data).includes("error")) {
+                                errorDiv.innerText = data.error
+                            } else {
+                                errorDiv.innerText = ''
+                                if(!alert("successfully deleted")) window.location.reload();
+                            }
+                    });
+                }
+                </script>
+            </button>
+        </div>
+        <div id="updateCdlClass">
+            <select id="updateCdlClassDropDown">
+                <option hidden selected>Select a cdlclass</option>
+                <script type="module">
+                    //populate update cdlclass dropdown
+                    import { makeSqlQuery } from './request.js'
+                    makeSqlQuery('select classId from cdlclass', (data) => {
+                        data.forEach(cdlclass => {  
+                            let option = document.createElement('option')
+                            option.innerText = cdlclass.classId
+                            document.getElementById('updateCdlClassDropDown').appendChild(option)
+                        })
+                    });
+                </script>
+            </select>
+            <div id="updateFields">
+                <script type="module">
+
+                    //dynamically create a text box for each field
+                    import { makeSqlQuery } from './request.js'; 
+                    let updateDiv = document.getElementById('updateFields'); 
+                    let QueryString =
+                        `select * from cdlclass limit 1;`;
+                    makeSqlQuery(QueryString, (data) => {
+                        if (Object.keys(data[0]).includes("error")) {
+                            errorDiv.innerText = data.error
+                        } else {
+                            errorDiv.innerText = '';
+                            Object.keys(data[0]).forEach(column => {  
+                                let textBox = document.createElement('input')
+                                textBox.type = 'text';
+                                textBox.placeholder = column
+                                textBox.id = "update" + column+ "Input"
+                                document.getElementById('updateFields').appendChild(textBox)
+                            })
+                        }
+                    });
+                </script>
+            </div>
+
+            <button id=updateButton>
+                Update cdlclass
+                <script type="module">
+                    import { makeSqlQuery } from './request.js'
+                    
+                    //set update button onclick
+                    document.getElementById("updateButton").onclick = () => {
+                        let cdlclass =
+                            document.getElementById('updateCdlClassDropDown').value  
+                        if (cdlclass === 'Select a cdlclass') return;
+
+                        //build query string
+                        let queryString="update cdlclass set "
+                        let updateDiv = document.getElementById('updateFields'); 
+                        for (let child of updateDiv.children) {
+                            if (child.nodeName == 'INPUT') {
+                                queryString += `${child.placeholder} = '${child.value}'`
+                                if (child.nextSibling) queryString += ", "
+                            }
+                        }
+                        queryString += ` where classid = '${cdlclass}';`
+                        
+                        //send query to DB
+                        makeSqlQuery(queryString, (data) => {
+                            if (Object.keys(data).includes("error")) {
+                                errorDiv.innerText = data.error
+                            } else {
+                                errorDiv.innerText = ''
+                                if(!alert("successfully updated")) window.location.reload();
+                            }
+                        });
+                    }
+                </script>
+            </button>
+
+        </div>
+        <div id="errorDiv"></div>
+    </div>
+
+</body>
+
+</html>

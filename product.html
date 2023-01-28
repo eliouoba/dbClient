@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="request.js" type="module"></script>
+</head>
+
+<body>
+    <h1 id=home><a href="index.html">ABC Dispatcher Database</a></h1>
+    <script>
+        var style = document.createElement('style');
+        let rule = 
+            "#updateProduct { " +
+            "display: flex; " +
+            "flex-direction: row; " +
+            "border: 1px solid; " +
+            "border-radius: 10px; " +
+            "padding: 10px; " +
+            "column-gap: 10px; }\n"
+
+        rule += 
+            '#deleteProduct { ' +
+            "border: 1px solid; " +
+            "border-radius: 10px; " +
+            "padding: 10px; }\n"
+        
+        rule += 
+            '#addProduct { ' +
+            'display: flex; ' +
+            'flex-direction: row; ' +
+            "border: 1px solid; " +
+            "border-radius: 10px; " +
+            "padding: 10px; " +
+            'justify-content: center; ' +
+            'column-gap: 10px; }\n'
+        
+        rule += 
+            '#addFields { ' +    
+            "column-count: 2; }\n"
+
+        rule += 
+            '#updateFields { ' +  
+            "column-count: 2; }\n"
+
+        style.innerHTML = rule;
+        document.body.appendChild(style);
+    </script>
+    
+    <div id="mainDiv">
+        <p id="rowHeader">Rows:</p>
+        <p id="interactHeader">Interact:</p>
+
+        <div id="addProduct">
+            <div id="addFields">
+                <script type="module">
+                    //dynamically create a text box for each field
+                    import { makeSqlQuery } from './request.js'; 
+                    let addDiv = document.getElementById('addFields'); 
+                    let queryString =
+                        `select * from product limit 1;`;
+                    makeSqlQuery(queryString, (data) => {
+                        if (Object.keys(data[0]).includes("error")) {
+                            errorDiv.innerText = data.error
+                        } else {
+                            errorDiv.innerText = '';
+                            Object.keys(data[0]).forEach(column => {  
+                                let textBox = document.createElement('input')
+                                textBox.type = 'text';
+                                textBox.placeholder = column
+                                textBox.id = "add" + column+ "Input"
+                                document.getElementById('addFields').appendChild(textBox)
+                            })
+                        }
+                    });
+                </script>
+            </div>
+
+            <button id=addButton>
+                add product
+                <script type="module">
+                    import { makeSqlQuery } from './request.js'
+
+                    //set add button onclick
+                    document.getElementById("addButton").onclick = () => {
+
+                        //build query string
+                        let queryString="insert into product values ("
+                        let addDiv = document.getElementById('addFields'); 
+                        for (let child of addDiv.children) {
+                            if (child.nodeName == 'INPUT') {
+                                queryString += `'${child.value}'`
+                                if (child.nextSibling) queryString += ", "
+                            }
+                        }
+                        queryString += ");"
+
+                        //send query to DB
+                        makeSqlQuery(queryString, (data) => {
+                            if (Object.keys(data).includes("error")) {
+                                errorDiv.innerText = data.error
+                            } else {
+                                errorDiv.innerText = ''
+                                if(!alert("successfully added")) window.location.reload();
+                            }
+                        });
+                    }
+                </script>
+            </button>
+
+        </div>
+        <div id="deleteProduct">
+            <select id="deleteProductDropDown">
+                <option hidden selected>Select a product</option>
+                <script type="module">
+                    
+                    //populate delete product dropdown
+                    import { makeSqlQuery } from './request.js'
+                    makeSqlQuery('select productId from product', (data) => {
+                        data.forEach(product => {  
+                            let option = document.createElement('option')
+                            option.innerText = product.productId
+                            document.getElementById('deleteProductDropDown').appendChild(option)
+                        })
+                    });
+                </script>
+            </select>
+            <button id=deleteButton>
+                Delete product
+                <script type="module">
+                    import { makeSqlQuery } from './request.js'
+                    
+                    //create delete button onclick function
+                    document.getElementById("deleteButton").onclick = () => {
+                        let product =
+                            document.getElementById('deleteProductDropDown').value  
+                        if (product === 'Select a product') return;
+                        
+                        //send query to DB
+                        makeSqlQuery(`delete from product where productid = '${product}'`,
+                        (data) => {
+                            if (Object.keys(data).includes("error")) {
+                                errorDiv.innerText = data.error
+                            } else {
+                                errorDiv.innerText = ''
+                                if(!alert("successfully deleted")) window.location.reload();
+                            }
+                    });
+                }
+                </script>
+            </button>
+        </div>
+        <div id="updateProduct">
+            <select id="updateProductDropDown">
+                <option hidden selected>Select a product</option>
+                <script type="module">
+                    //populate update product dropdown
+                    import { makeSqlQuery } from './request.js'
+                    makeSqlQuery('select productId from product', (data) => {
+                        data.forEach(product => {  
+                            let option = document.createElement('option')
+                            option.innerText = product.productId
+                            document.getElementById('updateProductDropDown').appendChild(option)
+                        })
+                    });
+                </script>
+            </select>
+            <div id="updateFields">
+                <script type="module">
+
+                    //dynamically create a text box for each field
+                    import { makeSqlQuery } from './request.js'; 
+                    let updateDiv = document.getElementById('updateFields'); 
+                    let QueryString =
+                        `select * from product limit 1;`;
+                    makeSqlQuery(QueryString, (data) => {
+                        if (Object.keys(data[0]).includes("error")) {
+                            errorDiv.innerText = data.error
+                        } else {
+                            errorDiv.innerText = '';
+                            Object.keys(data[0]).forEach(column => {  
+                                let textBox = document.createElement('input')
+                                textBox.type = 'text';
+                                textBox.placeholder = column
+                                textBox.id = "update" + column+ "Input"
+                                document.getElementById('updateFields').appendChild(textBox)
+                            })
+                        }
+                    });
+                </script>
+            </div>
+
+            <button id=updateButton>
+                Update product
+                <script type="module">
+                    import { makeSqlQuery } from './request.js'
+                    
+                    //set update button onclick
+                    document.getElementById("updateButton").onclick = () => {
+                        let product =
+                            document.getElementById('updateProductDropDown').value  
+                        if (product === 'Select a product') return;
+
+                        //build query string
+                        let queryString="update product set "
+                        let updateDiv = document.getElementById('updateFields'); 
+                        for (let child of updateDiv.children) {
+                            if (child.nodeName == 'INPUT') {
+                                queryString += `${child.placeholder} = '${child.value}'`
+                                if (child.nextSibling) queryString += ", "
+                            }
+                        }
+                        queryString += ` where productid = '${product}';`
+                        
+                        //send query to DB
+                        makeSqlQuery(queryString, (data) => {
+                            if (Object.keys(data).includes("error")) {
+                                errorDiv.innerText = data.error
+                            } else {
+                                errorDiv.innerText = ''
+                                if(!alert("successfully updated")) window.location.reload();
+                            }
+                        });
+                    }
+                </script>
+            </button>
+
+        </div>
+        <div id="errorDiv"></div>
+    </div>
+
+</body>
+
+</html>

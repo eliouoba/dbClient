@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Serves</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="request.js" type="module"></script>
+</head>
+
+<body>
+    <h1 id=home><a href="index.html">ABC Dispatcher Database</a></h1>
+    <script>
+        var style = document.createElement('style');
+        let rule = 
+            "#updateServes { " +
+            "display: flex; " +
+            "flex-direction: row; " +
+            "border: 1px solid; " +
+            "border-radius: 10px; " +
+            "padding: 10px; " +
+            "column-gap: 10px; }\n"
+
+        rule += 
+            '#deleteServes { ' +
+            "border: 1px solid; " +
+            "border-radius: 10px; " +
+            "padding: 10px; }\n"
+        
+        rule += 
+            '#addServes { ' +
+            'display: flex; ' +
+            'flex-direction: row; ' +
+            "border: 1px solid; " +
+            "border-radius: 10px; " +
+            "padding: 10px; " +
+            'justify-content: center; ' +
+            'column-gap: 10px; }\n'
+        
+        rule += 
+            '#addFields { ' +    
+            "column-count: 2; }\n"
+
+        rule += 
+            '#updateFields { ' +  
+            "column-count: 2; }\n"
+
+        style.innerHTML = rule;
+        document.body.appendChild(style);
+    </script>
+    
+    <div id="mainDiv">
+        <p id="rowHeader">Rows:</p>
+        <p id="interactHeader">Interact:</p>
+
+        <div id="addServes">
+            <div id="addFields">
+                <script type="module">
+                    //dynamically create a text box for each field
+                    import { makeSqlQuery } from './request.js'; 
+                    let addDiv = document.getElementById('addFields'); 
+                    let queryString =
+                        `select * from serves limit 1;`;
+                    makeSqlQuery(queryString, (data) => {
+                        if (Object.keys(data[0]).includes("error")) {
+                            errorDiv.innerText = data.error
+                        } else {
+                            errorDiv.innerText = '';
+                            Object.keys(data[0]).forEach(column => {  
+                                let textBox = document.createElement('input')
+                                textBox.type = 'text';
+                                textBox.placeholder = column
+                                textBox.id = "add" + column+ "Input"
+                                document.getElementById('addFields').appendChild(textBox)
+                            })
+                        }
+                    });
+                </script>
+            </div>
+
+            <button id=addButton>
+                add serves relationship
+                <script type="module">
+                    import { makeSqlQuery } from './request.js'
+
+                    //set add button onclick
+                    document.getElementById("addButton").onclick = () => {
+
+                        //build query string
+                        let queryString="insert into serves values ("
+                        let addDiv = document.getElementById('addFields'); 
+                        for (let child of addDiv.children) {
+                            if (child.nodeName == 'INPUT') {
+                                queryString += `'${child.value}'`
+                                if (child.nextSibling) queryString += ", "
+                            }
+                        }
+                        queryString += ");"
+
+                        //send query to DB
+                        makeSqlQuery(queryString, (data) => {
+                            if (Object.keys(data).includes("error")) {
+                                errorDiv.innerText = data.error
+                            } else {
+                                errorDiv.innerText = ''
+                                if(!alert("successfully added")) window.location.reload();
+                            }
+                        });
+                    }
+                </script>
+            </button>
+
+        </div>
+        <div id="deleteServes">
+            <select id="deleteServesDropDown">
+                <option hidden selected>Select a serves relationship</option>
+                <script type="module">
+                    
+                    //populate delete serves dropdown
+                    import { makeSqlQuery } from './request.js'
+                    makeSqlQuery('select * from serves', (data) => {
+                        data.forEach(serves => {  
+                            let option = document.createElement('option')
+                            option.innerText = Object.values(serves).toString().replaceAll(',', " ")
+                            document.getElementById('deleteServesDropDown').appendChild(option)
+                        })
+                    });
+                </script>
+            </select>
+            <button id=deleteButton>
+                Delete serves relationship
+                <script type="module">
+                    import { makeSqlQuery } from './request.js'
+                    
+                    //create delete button onclick function
+                    document.getElementById("deleteButton").onclick = () => {
+                        let serves =
+                            document.getElementById('deleteServesDropDown').value  
+                        if (serves === 'Select a serves relationship') return;
+                        
+                        //build query string
+                        let queryString = "delete from serves where "
+                        makeSqlQuery('select * from serves', (data) => {
+                            let values = serves.split(" ");
+                            let fields = Object.keys(data[0])
+    
+                            for (let i = 0; i < values.length; i++) {   
+                                queryString += `${fields[i]} = '${values[i]}'${i == values.length-1?'':' and '}` 
+                            }
+
+                            //send query to DB
+                            makeSqlQuery(queryString, (data) => {
+                                if (Object.keys(data).includes("error")) {
+                                    errorDiv.innerText = data.error
+                                } else {
+                                    errorDiv.innerText = ''
+                                    if(!alert("successfully deleted")) window.location.reload();
+                                }
+                            });
+                        });                        
+                    }
+                </script>
+            </button>
+        </div>
+        <div id="updateServes">
+            <select id="updateServesDropDown">
+                <option hidden selected>Select a serves relationship</option>
+                <script type="module">
+                    //populate update serves dropdown
+                    import { makeSqlQuery } from './request.js'
+                    makeSqlQuery('select * from serves', (data) => {
+                        data.forEach(serves => {  
+                            let option = document.createElement('option')
+                            option.innerText = Object.values(serves).toString().replaceAll(',', " ")
+                            document.getElementById('updateServesDropDown').appendChild(option)
+                        })
+                    });
+
+                    //automatically populate text boxes
+                    let dropDown = document.getElementById('updateServesDropDown');
+                    dropDown.onchange = () => {
+                        let boxes = document.getElementById('updateFields').children;
+                        let values = dropDown.value.split(" ");
+                        for (let i = 0; i < values.length; i++)
+                            boxes[i+1].value = values[i] //first child is a script
+                    }
+                </script>
+            </select>
+            <div id="updateFields">
+                <script type="module">
+
+                    //dynamically create a text box for each field
+                    import { makeSqlQuery } from './request.js'; 
+                    let updateDiv = document.getElementById('updateFields'); 
+                    let QueryString =
+                        `select * from serves limit 1;`;
+                    makeSqlQuery(QueryString, (data) => {
+                        if (Object.keys(data[0]).includes("error")) {
+                            errorDiv.innerText = data.error
+                        } else {
+                            errorDiv.innerText = '';
+                            Object.keys(data[0]).forEach(column => {  
+                                let textBox = document.createElement('input')
+                                textBox.type = 'text';
+                                textBox.placeholder = column
+                                textBox.id = "update" + column+ "Input"
+                                document.getElementById('updateFields').appendChild(textBox)
+                            })
+                        }
+                    });
+                </script>
+            </div>
+
+            <button id=updateButton>
+                Update serves relationship
+                <script type="module">
+                    import { makeSqlQuery } from './request.js'
+                    
+                    //set update button onclick
+                    document.getElementById("updateButton").onclick = () => {
+                        let serves =
+                            document.getElementById('updateServesDropDown').value  
+                        if (serves === 'Select a serves relationship') return;
+
+                        //build query string
+                        let queryString="update serves set "
+                        let updateDiv = document.getElementById('updateFields');
+                        let fields = []
+                        let values = document.getElementById('updateServesDropDown').value.split(" ");
+
+                        for (let child of updateDiv.children) {
+                            if (child.nodeName == 'INPUT') {
+                                queryString += `${child.placeholder} = '${child.value}'`
+                                fields.push(child.placeholder)
+                                if (child.nextSibling) queryString += ", "
+                            }
+                        }
+                        queryString += ` where `
+                        for (let i = 0; i < fields.length; i++)
+                            queryString += `${fields[i]} = '${values[i]}'${i == values.length-1?'':' and '}`    
+                                
+                        //send query to DB
+                        makeSqlQuery(queryString, (data) => {
+                            if (Object.keys(data).includes("error")) {
+                                errorDiv.innerText = data.error
+                            } else {
+                                errorDiv.innerText = ''
+                                if(!alert("successfully updated")) window.location.reload();
+                            }
+                        });
+                    }
+                </script>
+            </button>
+
+        </div>
+        <div id="errorDiv"></div>
+    </div>
+
+</body>
+
+</html>

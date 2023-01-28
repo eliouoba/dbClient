@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enrollsin</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="request.js" type="module"></script>
+</head>
+
+<body>
+    <h1 id=home><a href="index.html">ABC Dispatcher Database</a></h1>
+    <script>
+        var style = document.createElement('style');
+        let rule = 
+            "#updateEnrollsin { " +
+            "display: flex; " +
+            "flex-direction: row; " +
+            "border: 1px solid; " +
+            "border-radius: 10px; " +
+            "padding: 10px; " +
+            "column-gap: 10px; }\n"
+
+        rule += 
+            '#deleteEnrollsin { ' +
+            "border: 1px solid; " +
+            "border-radius: 10px; " +
+            "padding: 10px; }\n"
+        
+        rule += 
+            '#addEnrollsin { ' +
+            'display: flex; ' +
+            'flex-direction: row; ' +
+            "border: 1px solid; " +
+            "border-radius: 10px; " +
+            "padding: 10px; " +
+            'justify-content: center; ' +
+            'column-gap: 10px; }\n'
+        
+        rule += 
+            '#addFields { ' +    
+            "column-count: 2; }\n"
+
+        rule += 
+            '#updateFields { ' +  
+            "column-count: 2; }\n"
+
+        style.innerHTML = rule;
+        document.body.appendChild(style);
+    </script>
+    
+    <div id="mainDiv">
+        <p id="rowHeader">Rows:</p>
+        <p id="interactHeader">Interact:</p>
+
+        <div id="addEnrollsin">
+            <div id="addFields">
+                <script type="module">
+                    //dynamically create a text box for each field
+                    import { makeSqlQuery } from './request.js'; 
+                    let addDiv = document.getElementById('addFields'); 
+                    let queryString =
+                        `select * from enrollsin limit 1;`;
+                    makeSqlQuery(queryString, (data) => {
+                        if (Object.keys(data[0]).includes("error")) {
+                            errorDiv.innerText = data.error
+                        } else {
+                            errorDiv.innerText = '';
+                            Object.keys(data[0]).forEach(column => {  
+                                let textBox = document.createElement('input')
+                                textBox.type = 'text';
+                                textBox.placeholder = column
+                                textBox.id = "add" + column+ "Input"
+                                document.getElementById('addFields').appendChild(textBox)
+                            })
+                        }
+                    });
+                </script>
+            </div>
+
+            <button id=addButton>
+                add enrollsin relationship
+                <script type="module">
+                    import { makeSqlQuery } from './request.js'
+
+                    //set add button onclick
+                    document.getElementById("addButton").onclick = () => {
+
+                        //build query string
+                        let queryString="insert into enrollsin values ("
+                        let addDiv = document.getElementById('addFields'); 
+                        for (let child of addDiv.children) {
+                            if (child.nodeName == 'INPUT') {
+                                queryString += `'${child.value}'`
+                                if (child.nextSibling) queryString += ", "
+                            }
+                        }
+                        queryString += ");"
+
+                        //send query to DB
+                        makeSqlQuery(queryString, (data) => {
+                            if (Object.keys(data).includes("error")) {
+                                errorDiv.innerText = data.error
+                            } else {
+                                errorDiv.innerText = ''
+                                if(!alert("successfully added")) window.location.reload();
+                            }
+                        });
+                    }
+                </script>
+            </button>
+
+        </div>
+        <div id="deleteEnrollsin">
+            <select id="deleteEnrollsinDropDown">
+                <option hidden selected>Select an enrollsin relationship</option>
+                <script type="module">
+                    
+                    //populate delete enrollsin dropdown
+                    import { makeSqlQuery } from './request.js'
+                    makeSqlQuery('select * from enrollsin', (data) => {
+                        data.forEach(enrollsin => {  
+                            let option = document.createElement('option')
+                            option.innerText = Object.values(enrollsin).toString().replaceAll(',', " ")
+                            document.getElementById('deleteEnrollsinDropDown').appendChild(option)
+                        })
+                    });
+                </script>
+            </select>
+            <button id=deleteButton>
+                Delete enrollsin relationship
+                <script type="module">
+                    import { makeSqlQuery } from './request.js'
+                    
+                    //create delete button onclick function
+                    document.getElementById("deleteButton").onclick = () => {
+                        let enrollsin =
+                            document.getElementById('deleteEnrollsinDropDown').value  
+                        if (enrollsin === 'Select an enrollsin relationship') return;
+                        
+                        //build query string
+                        let queryString = "delete from enrollsin where "
+                        makeSqlQuery('select * from enrollsin', (data) => {
+                            let values = enrollsin.split(" ");
+                            let fields = Object.keys(data[0])
+    
+                            for (let i = 0; i < values.length; i++) {   
+                                queryString += `${fields[i]} = '${values[i]}'${i == values.length-1?'':' and '}` 
+                            }
+
+                            //send query to DB
+                            makeSqlQuery(queryString, (data) => {
+                                if (Object.keys(data).includes("error")) {
+                                    errorDiv.innerText = data.error
+                                } else {
+                                    errorDiv.innerText = ''
+                                    if(!alert("successfully deleted")) window.location.reload();
+                                }
+                            });
+                        });                        
+                    }
+                </script>
+            </button>
+        </div>
+        <div id="updateEnrollsin">
+            <select id="updateEnrollsinDropDown">
+                <option hidden selected>Select an enrollsin relationship</option>
+                <script type="module">
+                    //populate update enrollsin dropdown
+                    import { makeSqlQuery } from './request.js'
+                    makeSqlQuery('select * from enrollsin', (data) => {
+                        data.forEach(enrollsin => {  
+                            let option = document.createElement('option')
+                            option.innerText = Object.values(enrollsin).toString().replaceAll(',', " ")
+                            document.getElementById('updateEnrollsinDropDown').appendChild(option)
+                        })
+                    });
+
+                    //automatically populate text boxes
+                    let dropDown = document.getElementById('updateEnrollsinDropDown');
+                    dropDown.onchange = () => {
+                        let boxes = document.getElementById('updateFields').children;
+                        let values = dropDown.value.split(" ");
+                        for (let i = 0; i < values.length; i++)
+                            boxes[i+1].value = values[i] //first child is a script
+                    }
+                </script>
+            </select>
+            <div id="updateFields">
+                <script type="module">
+
+                    //dynamically create a text box for each field
+                    import { makeSqlQuery } from './request.js'; 
+                    let updateDiv = document.getElementById('updateFields'); 
+                    let QueryString =
+                        `select * from enrollsin limit 1;`;
+                    makeSqlQuery(QueryString, (data) => {
+                        if (Object.keys(data[0]).includes("error")) {
+                            errorDiv.innerText = data.error
+                        } else {
+                            errorDiv.innerText = '';
+                            Object.keys(data[0]).forEach(column => {  
+                                let textBox = document.createElement('input')
+                                textBox.type = 'text';
+                                textBox.placeholder = column
+                                textBox.id = "update" + column+ "Input"
+                                document.getElementById('updateFields').appendChild(textBox)
+                            })
+                        }
+                    });
+                </script>
+            </div>
+
+            <button id=updateButton>
+                Update enrollsin relationship
+                <script type="module">
+                    import { makeSqlQuery } from './request.js'
+                    
+                    //set update button onclick
+                    document.getElementById("updateButton").onclick = () => {
+                        let enrollsin =
+                            document.getElementById('updateEnrollsinDropDown').value  
+                        if (enrollsin === 'Select an enrollsin relationship') return;
+
+                        //build query string
+                        let queryString="update enrollsin set "
+                        let updateDiv = document.getElementById('updateFields');
+                        let fields = []
+                        let values = document.getElementById('updateEnrollsinDropDown').value.split(" ");
+
+                        for (let child of updateDiv.children) {
+                            if (child.nodeName == 'INPUT') {
+                                queryString += `${child.placeholder} = '${child.value}'`
+                                fields.push(child.placeholder)
+                                if (child.nextSibling) queryString += ", "
+                            }
+                        }
+                        queryString += ` where `
+                        for (let i = 0; i < fields.length; i++)
+                            queryString += `${fields[i]} = '${values[i]}'${i == values.length-1?'':' and '}`    
+                                
+                        //send query to DB
+                        makeSqlQuery(queryString, (data) => {
+                            if (Object.keys(data).includes("error")) {
+                                errorDiv.innerText = data.error
+                            } else {
+                                errorDiv.innerText = ''
+                                if(!alert("successfully updated")) window.location.reload();
+                            }
+                        });
+                    }
+                </script>
+            </button>
+
+        </div>
+        <div id="errorDiv"></div>
+    </div>
+
+</body>
+
+</html>

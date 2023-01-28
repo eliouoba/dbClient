@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Driver</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="request.js" type="module"></script>
+</head>
+
+<body>
+    <h1 id=home><a href="index.html">ABC Dispatcher Database</a></h1>
+    <script>
+        var style = document.createElement('style');
+        let rule = 
+            "#updateDriver { " +
+            "display: flex; " +
+            "flex-direction: row; " +
+            "border: 1px solid; " +
+            "border-radius: 10px; " +
+            "padding: 10px; " +
+            "column-gap: 10px; }\n"
+
+        rule += 
+            '#deleteDriver { ' +
+            "border: 1px solid; " +
+            "border-radius: 10px; " +
+            "padding: 10px; }\n"
+        
+        rule += 
+            '#addDriver { ' +
+            'display: flex; ' +
+            'flex-direction: row; ' +
+            "border: 1px solid; " +
+            "border-radius: 10px; " +
+            "padding: 10px; " +
+            'justify-content: center; ' +
+            'column-gap: 10px; }\n'
+        
+        rule += 
+            '#addFields { ' +    
+            "column-count: 2; }\n"
+
+        rule += 
+            '#updateFields { ' +  
+            "column-count: 2; }\n"
+
+        style.innerHTML = rule;
+        document.body.appendChild(style);
+    </script>
+    
+    <div id="mainDiv">
+        <p id="rowHeader">Rows:</p>
+        <p id="interactHeader">Interact:</p>
+
+        <div id="addDriver">
+            <div id="addFields">
+                <script type="module">
+                    //dynamically create a text box for each field
+                    import { makeSqlQuery } from './request.js'; 
+                    let addDiv = document.getElementById('addFields'); 
+                    let queryString =
+                        `select * from driver limit 1;`;
+                    makeSqlQuery(queryString, (data) => {
+                        if (Object.keys(data[0]).includes("error")) {
+                            errorDiv.innerText = data.error
+                        } else {
+                            errorDiv.innerText = '';
+                            Object.keys(data[0]).forEach(column => {  
+                                let textBox = document.createElement('input')
+                                textBox.type = 'text';
+                                textBox.placeholder = column
+                                textBox.id = "add" + column+ "Input"
+                                document.getElementById('addFields').appendChild(textBox)
+                            })
+                        }
+                    });
+                </script>
+            </div>
+
+            <button id=addButton>
+                add driver
+                <script type="module">
+                    import { makeSqlQuery } from './request.js'
+
+                    //set add button onclick
+                    document.getElementById("addButton").onclick = () => {
+
+                        //build query string
+                        let queryString="insert into driver values ("
+                        let addDiv = document.getElementById('addFields'); 
+                        for (let child of addDiv.children) {
+                            if (child.nodeName == 'INPUT') {
+                                queryString += `'${child.value}'`
+                                if (child.nextSibling) queryString += ", "
+                            }
+                        }
+                        queryString += ");"
+
+                        //send query to DB
+                        makeSqlQuery(queryString, (data) => {
+                            if (Object.keys(data).includes("error")) {
+                                errorDiv.innerText = data.error
+                            } else {
+                                errorDiv.innerText = ''
+                                if(!alert("successfully added")) window.location.reload();
+                            }
+                        });
+                    }
+                </script>
+            </button>
+
+        </div>
+        <div id="deleteDriver">
+            <select id="deleteDriverDropDown">
+                <option hidden selected>Select a driver</option>
+                <script type="module">
+                    
+                    //populate delete driver dropdown
+                    import { makeSqlQuery } from './request.js'
+                    makeSqlQuery('select driverId from driver', (data) => {
+                        data.forEach(driver => {  
+                            let option = document.createElement('option')
+                            option.innerText = driver.driverId
+                            document.getElementById('deleteDriverDropDown').appendChild(option)
+                        })
+                    });
+                </script>
+            </select>
+            <button id=deleteButton>
+                Delete driver
+                <script type="module">
+                    import { makeSqlQuery } from './request.js'
+                    
+                    //create delete button onclick function
+                    document.getElementById("deleteButton").onclick = () => {
+                        let driver =
+                            document.getElementById('deleteDriverDropDown').value  
+                        if (driver === 'Select a driver') return;
+                        
+                        //send query to DB
+                        makeSqlQuery(`delete from driver where driverid = '${driver}'`,
+                        (data) => {
+                            if (Object.keys(data).includes("error")) {
+                                errorDiv.innerText = data.error
+                            } else {
+                                errorDiv.innerText = ''
+                                if(!alert("successfully deleted")) window.location.reload();
+                            }
+                    });
+                }
+                </script>
+            </button>
+        </div>
+        <div id="updateDriver">
+            <select id="updateDriverDropDown">
+                <option hidden selected>Select a driver</option>
+                <script type="module">
+                    //populate update driver dropdown
+                    import { makeSqlQuery } from './request.js'
+                    makeSqlQuery('select driverId from driver', (data) => {
+                        data.forEach(driver => {  
+                            let option = document.createElement('option')
+                            option.innerText = driver.driverId
+                            document.getElementById('updateDriverDropDown').appendChild(option)
+                        })
+                    });
+                </script>
+            </select>
+            <div id="updateFields">
+                <script type="module">
+
+                    //dynamically create a text box for each field
+                    import { makeSqlQuery } from './request.js'; 
+                    let updateDiv = document.getElementById('updateFields'); 
+                    let QueryString =
+                        `select * from driver limit 1;`;
+                    makeSqlQuery(QueryString, (data) => {
+                        if (Object.keys(data[0]).includes("error")) {
+                            errorDiv.innerText = data.error
+                        } else {
+                            errorDiv.innerText = '';
+                            Object.keys(data[0]).forEach(column => {  
+                                let textBox = document.createElement('input')
+                                textBox.type = 'text';
+                                textBox.placeholder = column
+                                textBox.id = "update" + column+ "Input"
+                                document.getElementById('updateFields').appendChild(textBox)
+                            })
+                        }
+                    });
+                </script>
+            </div>
+
+            <button id=updateButton>
+                Update driver
+                <script type="module">
+                    import { makeSqlQuery } from './request.js'
+                    
+                    //set update button onclick
+                    document.getElementById("updateButton").onclick = () => {
+                        let driver =
+                            document.getElementById('updateDriverDropDown').value  
+                        if (driver === 'Select a driver') return;
+
+                        //build query string
+                        let queryString="update driver set "
+                        let updateDiv = document.getElementById('updateFields'); 
+                        for (let child of updateDiv.children) {
+                            if (child.nodeName == 'INPUT') {
+                                queryString += `${child.placeholder} = '${child.value}'`
+                                if (child.nextSibling) queryString += ", "
+                            }
+                        }
+                        queryString += ` where driverid = '${driver}';`
+                        
+                        //send query to DB
+                        makeSqlQuery(queryString, (data) => {
+                            if (Object.keys(data).includes("error")) {
+                                errorDiv.innerText = data.error
+                            } else {
+                                errorDiv.innerText = ''
+                                if(!alert("successfully updated")) window.location.reload();
+                            }
+                        });
+                    }
+                </script>
+            </button>
+
+        </div>
+        <div id="errorDiv"></div>
+    </div>
+
+</body>
+
+</html>

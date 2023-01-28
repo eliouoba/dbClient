@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <h1 id=home><a href="index.html">ABC Dispatcher Database</a></h1>
+    <div id="mainDiv">
+        <p>Enter SQL</p>
+        <textarea id="memo" cols="30" rows="10"></textarea>
+        <button id="execute" style="width: 100px">Execute Query<br> (Ctrl + Enter)</button>
+        
+        <script type="module">
+            import { makeSqlQuery, buildTable } from './request.js'; 
+            document.getElementById("memo").addEventListener("keyup", function(event) {
+                event.preventDefault();
+                if ((event.keyCode == 10 || event.keyCode == 13) && event.ctrlKey) {
+                    document.getElementById("execute").click();
+                }});
+        
+            let execute =  document.getElementById("execute")
+            execute.onclick = () => {
+                let memo = document.getElementById('memo')
+                makeSqlQuery(memo.value, (data) => {
+                    let existingTable = document.getElementById('dataTable')
+                    if (existingTable) existingTable.remove()               
+                    if (Object.keys(data).includes("error")) {
+                        errorDiv.innerText = data.error;
+                    } else {
+                        let table = buildTable(data)
+                        errorDiv.innerText = '';
+                        execute.after(table)
+                    }
+                });
+            }
+        </script> 
+        <div id="errorDiv"></div>
+
+    </div>
+
+</body>
+
+</html>
